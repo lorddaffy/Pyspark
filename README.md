@@ -126,3 +126,30 @@ airports = spark.read.csv(file_path, header=True)
 airports.show()
 ```
 __________________________________________________
+
+### Manipulating data
+
+> Updating a Spark DataFrame is somewhat different than working in pandas because the Spark DataFrame is immutable. This means that it can't be changed, and so columns can't be updated in place; To overwrite the original DataFrame you must reassign the returned DataFrame using the method like so:
+>>`df = df.withColumn("newCol", df.oldCol + 1)`
+
+- Make a new SparkSession called spark using SparkSession.builder.getOrCreate().
+- Create a DataFrame containing the values of the flights table in the .catalog. Save it as flights
+- Show the head of flights
+- Check the output: the column air_time contains the duration of the flight in minutes.
+- Update flights to include a new column called duration_hrs, that contains the duration of each flight in hours (you'll need to divide air_time by the number of minutes in an hour).
+``` 
+# Import SparkSession from pyspark.sql
+from pyspark.sql import SparkSession
+
+# Create the DataFrame flights
+flights = spark.table("flights")
+
+# Show the head
+flights.show()
+
+# Add duration_hrs
+flights = flights.withColumn("duration_hrs",(flights.air_time/60))
+#flights.show()
+
+```
+__________________________________________________
