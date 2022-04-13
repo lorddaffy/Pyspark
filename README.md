@@ -286,8 +286,9 @@ __________________________________________________
 - Join the flights with the airports DataFrame on the dest column by calling the .join() method on flights
 - Examine the data after joining.
 ``` 
-# Import pyspark.sql.functions as F
-import pyspark.sql.functions as F
+# Import SparkSession from pyspark.sql
+from pyspark.sql import SparkSession
+
 # Examine the data
 airports.show()
 
@@ -299,5 +300,59 @@ flights_with_airports = flights.join(airports, on="dest", how="leftouter")
 
 # Examine the new DataFrame
 flights_with_airports.show()
+```
+__________________________________________________
+
+### WE Will be working to build a model that predicts whether or not a flight will be delayed based on the flights data we've been working with. This model will also include information about the plane that flew the route, so the first step is to join the two tables: flights and planes!
+
+- Rename the year column of planes to plane_year to avoid duplicate column names.
+- Create a new DataFrame called model_data by joining the flights table with planes using the tailnum column as the key.
+``` 
+# Import SparkSession from pyspark.sql
+from pyspark.sql import SparkSession
+
+# Rename year column
+planes = planes.withColumnRenamed("year","plane_year")
+
+# Join the DataFrames
+model_data = flights.join(planes, on="tailnum", how="leftouter")
+```
+__________________________________________________
+
+- Use the method .withColumn() to .cast() the following columns to type "integer". Access the columns using the df.col notation:
+  - model_data.arr_delay
+  - model_data.air_time
+  - model_data.month
+  - model_data.plane_year
+``` 
+# Import SparkSession from pyspark.sql
+from pyspark.sql import SparkSession
+
+# Cast the columns to integers
+model_data = model_data.withColumn("arr_delay", model_data.arr_delay.cast('integer'))
+model_data = model_data.withColumn("air_time", model_data.air_time.cast('integer'))
+model_data = model_data.withColumn("month", model_data.month.cast('integer'))
+model_data = model_data.withColumn("plane_year", model_data.plane_year.cast('integer'))
+```
+__________________________________________________
+> Consider that you're modeling a yes or no question: is the flight late? However, your data contains the arrival delay in minutes for each flight. Thus, you'll need to create a boolean column which indicates whether the flight was late or not!
+
+- Instructions:
+	- Create column is_late. This column is equal to model_data.arr_delay > 0.
+	- Convert this column to an integer column so that you can use it in your model and name it label
+	- Filter out missing values
+``` 
+# Import SparkSession from pyspark.sql
+from pyspark.sql import SparkSession
+
+# Create is_late
+model_data = model_data.withColumn("is_late", model_data.arr_delay > 0)
+
+# Convert to an integer
+model_data = model_data.withColumn("label", model_data.is_late.cast("integer"))
+
+# Remove missing values
+model_data = model_data.filter("arr_delay is not NULL and dep_delay is not NULL and air_time is not NULL and plane_year is not NULL")
+#model_data.show()
 ```
 __________________________________________________
