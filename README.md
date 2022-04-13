@@ -153,3 +153,151 @@ flights = flights.withColumn("duration_hrs",(flights.air_time/60))
 
 ```
 __________________________________________________
+
+> Filtering Data
+
+- Use the .filter() method to find all the flights that flew over 1000 miles the two ways
+- Print heads of both DataFrames and make sure they're actually equal!
+``` 
+# Import SparkSession from pyspark.sql
+from pyspark.sql import SparkSession
+
+# Filter flights by passing a string
+long_flights1 = flights.filter("distance > 1000")
+
+# Filter flights by passing a column of boolean values
+long_flights2 = flights.filter(flights.distance > 1000)
+
+# Print the data to check they're equal
+long_flights1.show()
+long_flights2.show()
+```
+__________________________________________________
+
+> Selecting & Filtering
+
+- Select the columns "tailnum", "origin", and "dest" from flights by passing the column names as strings.
+- Select the columns "origin", "dest", and "carrier" using the df.colName syntax and then filter the result to only keep flights from SEA to PDX.
+``` 
+# Import SparkSession from pyspark.sql
+from pyspark.sql import SparkSession
+
+# Select the first set of columns
+selected1 = flights.select("tailnum", "origin", "dest")
+
+# Select the second set of columns
+temp = flights.select(flights.origin, flights.dest, flights.carrier)
+
+# Define first filter
+filterA = flights.origin == "SEA"
+
+# Define second filter
+filterB = flights.dest == "PDX"
+
+# Filter the data, first by filterA then by filterB
+selected2 = temp.filter(filterA).filter(filterB)
+```
+__________________________________________________
+
+> Create a table of the average speed of each flight both ways.
+
+- Calculate average speed by dividing the distance by the air_time (converted to hours). Use the .alias() method name this column "avg_speed".
+- Select the columns "origin", "dest", "tailnum", and avg_speed
+- Create the same table using .selectExpr().
+``` 
+# Import SparkSession from pyspark.sql
+from pyspark.sql import SparkSession
+
+# Define avg_speed
+avg_speed = (flights.distance/(flights.air_time/60)).alias("avg_speed")
+
+# Select the correct columns
+speed1 = flights.select("origin", "dest", "tailnum", avg_speed)
+
+# Create the same table using a SQL expression
+speed2 = flights.selectExpr("origin", "dest", "tailnum", "distance/(air_time/60) as avg_speed")
+```
+__________________________________________________
+
+- Find the length of the shortest (in terms of distance) flight that left PDX.
+- Find the length of the longest (in terms of time) flight that left SEA.
+``` 
+# Import SparkSession from pyspark.sql
+from pyspark.sql import SparkSession
+
+# Find the shortest flight from PDX in terms of distance
+flights.filter(flights.origin == "PDX").groupBy().min("distance").show()
+
+# Find the longest flight from SEA in terms of air time
+flights.filter(flights.origin == "SEA").groupBy().max("air_time").show()
+```
+__________________________________________________
+- Get the average air time of Delta Airlines flights (where the carrier column has the value "DL") that left SEA. The place of departure is stored in the column origin and print the result.
+- Get the total number of hours all planes in this dataset spent in the air by creating a column called duration_hrs from the column air_time and print the result.
+``` 
+# Import SparkSession from pyspark.sql
+from pyspark.sql import SparkSession
+
+# Average duration of Delta flights
+flights.filter(flights.carrier == "DL").filter(flights.origin == "SEA").groupBy().avg("air_time").show()
+
+# Total hours in the air
+flights.withColumn("duration_hrs", flights.air_time/60).groupBy().sum("duration_hrs").show()
+```
+__________________________________________________
+> Grouping and Aggregating I
+
+- Create a DataFrame that is grouped by the column tailnum and count the number of flights each plane made.
+- Create a DataFrame that is grouped by the column origin, find average duration of flights from PDX and SEA.
+
+``` 
+# Import SparkSession from pyspark.sql
+from pyspark.sql import SparkSession
+
+# Group by tailnum
+flights.groupBy("tailnum").count().show()
+# Group by origin
+flights.groupBy("origin").avg("air_time").show()
+```
+__________________________________________________
+
+> Grouping and Aggregating II
+- Import the submodule pyspark.sql.functions.
+- Create a GroupedData table that's grouped by both the month and dest columns. Refer to the two columns by passing both strings as separate arguments.
+- Get the average dep_delay in each month for each destination.
+- Find the standard deviation of dep_delay.
+``` 
+# Import pyspark.sql.functions as F
+import pyspark.sql.functions as F
+
+# Group by month and dest
+# Average departure delay by month and destination
+flights.groupBy("month","dest").avg("dep_delay").show()
+
+# Group by month and dest
+# Standard deviation of departure delay
+flights.groupBy("month","dest").agg(F.stddev("dep_delay")).show()
+```
+__________________________________________________
+
+> Joining
+- Examine the airports DataFrame
+- Rename the faa column in airports to dest
+- Join the flights with the airports DataFrame on the dest column by calling the .join() method on flights
+- Examine the data after joining.
+``` 
+# Import pyspark.sql.functions as F
+import pyspark.sql.functions as F
+# Examine the data
+airports.show()
+
+# Rename the faa column
+airports = airports.withColumnRenamed("faa", "dest")
+
+# Join the DataFrames
+flights_with_airports = flights.join(airports, on="dest", how="leftouter")
+
+# Examine the new DataFrame
+flights_with_airports.show()
+```
+__________________________________________________
